@@ -1,18 +1,27 @@
 from ultralytics import YOLO
 from pathlib import Path
-# import torch
-# from PIL import Image
-# import numpy
+import torch
+
 from src.config import load_config
 
+
 class YOLOv11Inference:
-    def __init__(self, model_name, device='cuda'):
+    def __init__(self, model_name, device=None):
+
+        # Auto-select device
+        if device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = device
+
+        print(f"Using device: {self.device}")
+
         self.model = YOLO(model_name)
-        self.device = device
         self.model.to(self.device)
 
-        # loading config from default.yaml
+        # Load config
         config = load_config()
+
         self.conf_threshold = config["model"]["conf_threshold"]
         self.extensions = config["data"]["image_extension"]
 
@@ -25,51 +34,55 @@ class YOLOv11Inference:
             device=self.device
         )
 
-        # process results
+        # Process results
         detection = []
         class_counts = {}
 
         for result in results:
             for box in result.boxes:
+
                 cls = result.names[int(box.cls)]
                 conf = float(box.conf)
                 bbox = box.xyxy[0].tolist()
 
                 detection.append({
-                    'class' : cls,
-                    'confidence' : conf,
-                    'bbox' : bbox,
-                    'count' : 1
+                    'class': cls,
+                    'confidence': conf,
+                    'bbox': bbox,
+                    'count': 1
                 })
 
                 class_counts[cls] = class_counts.get(cls, 0) + 1
 
+        # Update counts
         for det in detection:
             det['count'] = class_counts[det['class']]
 
         return {
-            'image_path' : str(image_path),
-            'detections' : detection,
-            'total_objects' : len(detection),
-            'unique_class' : list(class_counts.keys()), # [0, 1, 2]
-            'class_counts' : class_counts # {0 : 3, 1 : 10, 2, : 1}
+            'image_path': str(image_path),
+            'detections': detection,
+            'total_objects': len(detection),
+            'unique_class': list(class_counts.keys()),
+            'class_counts': class_counts
         }
 
-
     def process_directory(self, directory):
+
         metadata = []
 
         patterns = [f"*{ext}" for ext in self.extensions]
 
         image_paths = []
+
         for pattern in patterns:
             image_paths.extend(Path(directory).glob(pattern))
 
         for img_path in image_paths:
             try:
                 metadata.append(self.process_image(img_path))
+
             except Exception as e:
                 print(f"Error processing {img_path}: {str(e)}")
                 continue
-        # print(metadata)
+
         return metadata
