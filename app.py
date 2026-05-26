@@ -1,6 +1,5 @@
 import os
 import json
-from pathlib import Path
 
 import streamlit as st
 from PIL import Image, ImageDraw
@@ -54,12 +53,12 @@ if st.button("Start Inference"):
 
     else:
 
-        # Create temporary folder
+        # Create temp folder
         temp_dir = "temp_images"
 
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Save uploaded files
+        # Save uploaded images
         for uploaded_file in uploaded_files:
 
             save_path = os.path.join(
@@ -72,33 +71,26 @@ if st.button("Start Inference"):
 
         st.info("Running YOLO inference...")
 
-        # Initialize inference
+        # Run inference
         inference = YOLOv11Inference(model_path)
 
-        # Process images
         metadata = inference.process_directory(temp_dir)
 
-        # Save metadata in session
+        # Store metadata
         st.session_state.metadata = metadata
 
         # Save metadata.json
         os.makedirs("processed", exist_ok=True)
 
-        metadata_path = "processed/metadata.json"
-
-        with open(metadata_path, "w") as f:
+        with open("processed/metadata.json", "w") as f:
             json.dump(metadata, f, indent=4)
 
         st.success(
             f"Processed {len(metadata)} images successfully!"
         )
 
-        st.success(
-            f"Metadata saved to: {metadata_path}"
-        )
 
-
-# ---------------- SEARCH ENGINE ----------------
+# ---------------- SEARCH SECTION ----------------
 
 st.header("🔎 Search Objects")
 
@@ -107,7 +99,7 @@ metadata = st.session_state.metadata
 
 if metadata:
 
-    # Collect all detected classes
+    # Get all object classes
     all_classes = set()
 
     for item in metadata:
@@ -117,13 +109,6 @@ if metadata:
             all_classes.add(det["class"])
 
     all_classes = sorted(list(all_classes))
-
-    # Search mode
-    search_mode = st.radio(
-        "Search mode",
-        ["OR", "AND"],
-        horizontal=True
-    )
 
     # Select objects
     selected_classes = st.multiselect(
@@ -136,6 +121,7 @@ if metadata:
 
         matched_results = []
 
+        # Find matching images
         for item in metadata:
 
             image_classes = [
@@ -143,21 +129,11 @@ if metadata:
                 for det in item["detections"]
             ]
 
-            if search_mode == "OR":
-
-                if any(
-                    cls in image_classes
-                    for cls in selected_classes
-                ):
-                    matched_results.append(item)
-
-            else:
-
-                if all(
-                    cls in image_classes
-                    for cls in selected_classes
-                ):
-                    matched_results.append(item)
+            if any(
+                cls in image_classes
+                for cls in selected_classes
+            ):
+                matched_results.append(item)
 
         st.success(
             f"Found {len(matched_results)} matching images"
@@ -199,6 +175,7 @@ if metadata:
                     fill="red"
                 )
 
+            # Show image
             st.image(image, width=700)
 
             st.write("### Detected Search Objects")
