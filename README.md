@@ -26,18 +26,21 @@ The YOLOv11 Object Search Application is a Computer Vision-based web application
 5. Ultralytics
 
 ## INSTALLATION:
-
+```
 git clone https://github.com/SandhiyaRajagopal/Yolov11_Image_search.git
 cd Yolov11_Image_search
 pip install -r requirements.txt
+```
 
 ## RUN THE PROJECT:
 streamlit run app.py
 
 ## OUTPUT:
+```
 Detects objects from uploaded images
 Displays bounding boxes and confidence scores
 Allows object-based image search
+```
 <img width="1600" height="900" alt="OUTPUT" src="https://github.com/user-attachments/assets/ede54000-a733-47da-9fba-e30284e95435" />
 <img width="1600" height="900" alt="OUTPUT2" src="https://github.com/user-attachments/assets/1221df18-94ab-4d06-a243-2706ab6480be" />
 
