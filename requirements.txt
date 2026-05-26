@@ -5,7 +5,5 @@ pyyaml
 torch
 torchvision
 pillow
-pandas
 numpy
-
-
+pi-heif

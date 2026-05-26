@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🔍 Computer Vision Powered Search Application")
+st.title("🔍 YOLOv11 Object Search")
 
 
 # ---------------- SESSION STATE ----------------
@@ -55,7 +55,7 @@ if st.button("Start Inference"):
 
     else:
 
-        # ---------------- CLEAR OLD IMAGES ----------------
+        # ---------- CLEAR OLD IMAGES ----------
 
         temp_dir = "temp_images"
 
@@ -64,7 +64,7 @@ if st.button("Start Inference"):
 
         os.makedirs(temp_dir, exist_ok=True)
 
-        # ---------------- SAVE NEW IMAGES ----------------
+        # ---------- SAVE NEW IMAGES ----------
 
         for uploaded_file in uploaded_files:
 
@@ -78,17 +78,22 @@ if st.button("Start Inference"):
 
         st.info("Running YOLO inference...")
 
-        # ---------------- RUN YOLO ----------------
+        # ---------- RUN YOLO ----------
 
-        inference = YOLOv11Inference(model_path)
+        inference = YOLOv11Inference(
+            model_path,
+            device="cpu"
+        )
 
-        metadata = inference.process_directory(temp_dir)
+        metadata = inference.process_directory(
+            temp_dir
+        )
 
-        # ---------------- SAVE SESSION ----------------
+        # ---------- SAVE SESSION ----------
 
         st.session_state.metadata = metadata
 
-        # ---------------- SAVE METADATA ----------------
+        # ---------- SAVE METADATA ----------
 
         os.makedirs("processed", exist_ok=True)
 
@@ -109,7 +114,7 @@ metadata = st.session_state.metadata
 
 if metadata:
 
-    # ---------------- GET ALL CLASSES ----------------
+    # ---------- GET ALL CLASSES ----------
 
     all_classes = set()
 
@@ -121,20 +126,20 @@ if metadata:
 
     all_classes = sorted(list(all_classes))
 
-    # ---------------- OBJECT SELECT ----------------
+    # ---------- SELECT OBJECTS ----------
 
     selected_classes = st.multiselect(
         "Select objects to search",
         all_classes
     )
 
-    # ---------------- SEARCH BUTTON ----------------
+    # ---------- SEARCH BUTTON ----------
 
     if st.button("Search Images"):
 
         matched_results = []
 
-        # ---------------- FIND MATCHES ----------------
+        # ---------- FIND MATCHING IMAGES ----------
 
         for item in metadata:
 
@@ -153,7 +158,7 @@ if metadata:
             f"Found {len(matched_results)} matching images"
         )
 
-        # ---------------- DISPLAY RESULTS ----------------
+        # ---------- DISPLAY RESULTS ----------
 
         for item in matched_results:
 
@@ -161,11 +166,25 @@ if metadata:
                 os.path.basename(item["image_path"])
             )
 
-            image = Image.open(item["image_path"])
+            # ---------- SAFE IMAGE OPEN ----------
+
+            try:
+
+                image = Image.open(
+                    item["image_path"]
+                ).convert("RGB")
+
+            except Exception as e:
+
+                st.error(
+                    f"Cannot open image: {e}"
+                )
+
+                continue
 
             draw = ImageDraw.Draw(image)
 
-            # -------- DRAW ONLY SEARCHED OBJECTS --------
+            # ---------- DRAW ONLY SEARCHED OBJECTS ----------
 
             for det in item["detections"]:
 
@@ -181,7 +200,7 @@ if metadata:
                 draw.rectangle(
                     bbox,
                     outline="red",
-                    width=3
+                    width=4
                 )
 
                 draw.text(
@@ -190,13 +209,14 @@ if metadata:
                     fill="red"
                 )
 
-            # ---------------- SHOW IMAGE ----------------
+            # ---------- SHOW IMAGE ----------
 
-            st.image(image, width=700)
+            st.image(
+                image,
+                use_container_width=True
+            )
 
-            st.write("### Detected Search Objects")
-
-            # -------- SHOW ONLY SEARCHED OBJECTS --------
+            st.write("### Detected Objects")
 
             for det in item["detections"]:
 
