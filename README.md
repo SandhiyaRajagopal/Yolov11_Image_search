@@ -5,11 +5,11 @@ The YOLOv11 Object Search Application is a Computer Vision-based web application
 
 ## ENVIRONMENT SETUP:
 ## Prerequisites
-Python 3.11+
-Visual Studio Code
-Streamlit
-YOLOv11
-Internet Connection
+1. Python 3.11+
+2. Visual Studio Code
+3. Streamlit
+4. YOLOv11
+5. Internet Connection
 
 ## FEATURES:
 1. Real-time object detection
