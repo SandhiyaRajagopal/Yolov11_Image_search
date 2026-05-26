@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 
 import streamlit as st
 from PIL import Image, ImageDraw
@@ -49,16 +50,22 @@ uploaded_files = st.file_uploader(
 if st.button("Start Inference"):
 
     if not uploaded_files:
+
         st.warning("Please upload at least one image.")
 
     else:
 
-        # Create temp folder
+        # ---------------- CLEAR OLD IMAGES ----------------
+
         temp_dir = "temp_images"
+
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Save uploaded images
+        # ---------------- SAVE NEW IMAGES ----------------
+
         for uploaded_file in uploaded_files:
 
             save_path = os.path.join(
@@ -71,15 +78,18 @@ if st.button("Start Inference"):
 
         st.info("Running YOLO inference...")
 
-        # Run inference
+        # ---------------- RUN YOLO ----------------
+
         inference = YOLOv11Inference(model_path)
 
         metadata = inference.process_directory(temp_dir)
 
-        # Store metadata
+        # ---------------- SAVE SESSION ----------------
+
         st.session_state.metadata = metadata
 
-        # Save metadata.json
+        # ---------------- SAVE METADATA ----------------
+
         os.makedirs("processed", exist_ok=True)
 
         with open("processed/metadata.json", "w") as f:
@@ -99,7 +109,8 @@ metadata = st.session_state.metadata
 
 if metadata:
 
-    # Get all object classes
+    # ---------------- GET ALL CLASSES ----------------
+
     all_classes = set()
 
     for item in metadata:
@@ -110,18 +121,21 @@ if metadata:
 
     all_classes = sorted(list(all_classes))
 
-    # Select objects
+    # ---------------- OBJECT SELECT ----------------
+
     selected_classes = st.multiselect(
         "Select objects to search",
         all_classes
     )
 
-    # Search button
+    # ---------------- SEARCH BUTTON ----------------
+
     if st.button("Search Images"):
 
         matched_results = []
 
-        # Find matching images
+        # ---------------- FIND MATCHES ----------------
+
         for item in metadata:
 
             image_classes = [
@@ -151,7 +165,8 @@ if metadata:
 
             draw = ImageDraw.Draw(image)
 
-            # Draw ONLY searched objects
+            # -------- DRAW ONLY SEARCHED OBJECTS --------
+
             for det in item["detections"]:
 
                 cls = det["class"]
@@ -175,12 +190,14 @@ if metadata:
                     fill="red"
                 )
 
-            # Show image
+            # ---------------- SHOW IMAGE ----------------
+
             st.image(image, width=700)
 
             st.write("### Detected Search Objects")
 
-            # Show ONLY searched objects
+            # -------- SHOW ONLY SEARCHED OBJECTS --------
+
             for det in item["detections"]:
 
                 if det["class"] not in selected_classes:
